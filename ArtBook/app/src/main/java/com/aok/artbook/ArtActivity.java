@@ -62,15 +62,19 @@ public class ArtActivity extends AppCompatActivity {
             binding.btnSave.setVisibility(View.VISIBLE);
 
             Bitmap selectImage = BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.selectimg);
-            binding.imageView.setImageResource(R.drawable.selectimg);
+            binding.imageView.setImageBitmap(selectImage);
 
-        }else{
-            int artId = intent.getIntExtra("artId", 0);
+        }else {
+            int artId = intent.getIntExtra("artId", 1);
             binding.btnSave.setVisibility(View.INVISIBLE);
+            binding.artNameText.setEnabled(false);
+            binding.artistNameText.setEnabled(false);
+            binding.yearText.setEnabled(false);
+            binding.imageView.setEnabled(false);
 
             try {
 
-                Cursor cursor =sqLiteDatabase.rawQuery("SELECT * FROM arts WHERE id = ?", null);
+                Cursor cursor =sqLiteDatabase.rawQuery("SELECT * FROM arts WHERE id = ?", new String[] {String.valueOf(artId)});
 
                 int artNameIx = cursor.getColumnIndex("artName");
                 int artistNameIx = cursor.getColumnIndex("artistName");
@@ -96,63 +100,9 @@ public class ArtActivity extends AppCompatActivity {
 
     }
 
-    public void save(View view){
 
-        String artName = binding.artNameText.getText().toString();
-        String artistName = binding.artistNameText.getText().toString();
-        String year = binding.yearText.getText().toString();
 
-        Bitmap smallImage = makeSmallerImage(selectedImage, 300);
 
-        ByteArrayOutputStream outputStream =  new ByteArrayOutputStream();
-        smallImage.compress(Bitmap.CompressFormat.PNG,50, outputStream);
-        byte[] byteArray = outputStream.toByteArray();
-
-        try {
-            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS arts (id INTEGER PRIMARY KEY, artName VARCHAR, artistName VARCHAR, year VARCHAR, image BLOB)");
-
-            String sqlString = ("INSERT INTO  arts (artName, artistName, year, image) VALUES(?, ?, ?, ?)");
-
-            SQLiteStatement sqLiteStatement = sqLiteDatabase.compileStatement(sqlString);
-            sqLiteStatement.bindString(1, artName);
-            sqLiteStatement.bindString(2, artistName);
-            sqLiteStatement.bindString(3, year);
-            sqLiteStatement.bindBlob(4, byteArray);
-            sqLiteStatement.execute();
-
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        Intent intent = new Intent(ArtActivity.this, MainActivity.class);
-        //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // Program içinde açılan tüm operasyonları kapatır ve sadece yeni açılacak olan açılır
-        startActivity(intent);
-
-    }
-
-    public Bitmap makeSmallerImage(Bitmap image, int maximumSize){
-
-        int width = image.getWidth();
-        int height = image.getHeight();
-
-        float bitmapRatio = (float) width / (float) height;
-
-        if(bitmapRatio > 1){
-            // Görsel yataydır(Landscape)
-
-            width = maximumSize;
-            height = (int) (width * bitmapRatio);
-
-        }else { // (bitmapRatio <= 1)
-            // Görsel kare veya dikeydir(Portrait)
-
-            height = maximumSize;
-            width = (int) (height * bitmapRatio);
-
-        }
-
-        return image.createScaledBitmap(image, width, height, true);
-    }
 
     public void selectImage(View view){
 
@@ -232,5 +182,64 @@ public class ArtActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    public void save(View view){
+
+        String artName = binding.artNameText.getText().toString();
+        String artistName = binding.artistNameText.getText().toString();
+        String year = binding.yearText.getText().toString();
+
+        Bitmap smallImage = makeSmallerImage(selectedImage, 300);
+
+        ByteArrayOutputStream outputStream =  new ByteArrayOutputStream();
+        smallImage.compress(Bitmap.CompressFormat.PNG,50, outputStream);
+        byte[] byteArray = outputStream.toByteArray();
+
+        try {
+            sqLiteDatabase = this.openOrCreateDatabase("Arts", MODE_PRIVATE, null);
+            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS arts (id INTEGER PRIMARY KEY, artName VARCHAR, artistName VARCHAR, year VARCHAR, image BLOB)");
+
+            String sqlString = ("INSERT INTO  arts (artName, artistName, year, image) VALUES(?, ?, ?, ?)");
+
+            SQLiteStatement sqLiteStatement = sqLiteDatabase.compileStatement(sqlString);
+            sqLiteStatement.bindString(1, artName);
+            sqLiteStatement.bindString(2, artistName);
+            sqLiteStatement.bindString(3, year);
+            sqLiteStatement.bindBlob(4, byteArray);
+            sqLiteStatement.execute();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        Intent intent = new Intent(ArtActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // Program içinde açılan tüm operasyonları kapatır ve sadece yeni açılacak olan açılır
+        startActivity(intent);
+
+    }
+
+    public Bitmap makeSmallerImage(Bitmap image, int maximumSize){
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+
+        if(bitmapRatio > 1){
+            // Görsel yataydır(Landscape)
+
+            width = maximumSize;
+            height = (int) (width * bitmapRatio);
+
+        }else { // (bitmapRatio <= 1)
+            // Görsel kare veya dikeydir(Portrait)
+
+            height = maximumSize;
+            width = (int) (height * bitmapRatio);
+
+        }
+
+        return image.createScaledBitmap(image, width, height, true);
     }
 }

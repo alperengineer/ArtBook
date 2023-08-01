@@ -36,8 +36,8 @@ public class ArtAdapter extends RecyclerView.Adapter<ArtAdapter.ArtHolder> {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(holder.itemView.getContext(), ArtActivity.class);
-                intent.putExtra("info", "old");
                 intent.putExtra("artId", artArrayList.get(holder.getAdapterPosition()).id);
+                intent.putExtra("info", "old");
                 holder.itemView.getContext().startActivity(intent);
             }
         });
